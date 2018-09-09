@@ -2,11 +2,9 @@ package cse.dsldemo.weather
 
 import java.time.{OffsetDateTime, ZoneOffset}
 
-import org.scalatest.path
+import org.scalatest.{MustMatchers, path}
 
-import scala.util.{Failure, Success}
-
-class UsefulWeatherTest extends path.FunSpec {
+class UsefulWeatherTest extends path.FunSpec with MustMatchers {
   val happy = JsonWeather (
     altimeter = "3013",
     cloudList = List (List ("BKN", "016"), List ("OVC", "021")),
@@ -28,8 +26,8 @@ class UsefulWeatherTest extends path.FunSpec {
       val after = OffsetDateTime.now ()
 
       if (before.getDayOfMonth == after.getDayOfMonth) {
-        it ("produces a nicely-turned-out result") {
-          assert(result === UsefulWeather(
+        it ("produces a nicely-turned-out UsefulWeather") {
+          result must equal (UsefulWeather(
             temperatureCelsius = 22,
             relativeHumidity = UsefulWeather.relativeHumidity(22, 19),
             windSpeedFtPerSec = 10 * 1.6878,
@@ -72,8 +70,8 @@ class UsefulWeatherTest extends path.FunSpec {
         }
 
         it ("produces the proper failure") {
-          assert (exception.getClass === classOf[NumberFormatException])
-          assert (exception.getMessage === s"For input string: 'booga' in JSON field $name")
+          exception.getClass must equal (classOf[NumberFormatException])
+          exception.getMessage must equal (s"For input string: 'booga' in JSON field $name")
         }
       }
     }
@@ -86,7 +84,7 @@ class UsefulWeatherTest extends path.FunSpec {
       val result = UsefulWeather.from (jsonWeather)
 
       it ("produces a ceiling of 60000ft") {
-        assert (result.ceilingFt === 60000)
+        result.ceilingFt must equal (60000)
       }
     }
   }
@@ -98,7 +96,20 @@ class UsefulWeatherTest extends path.FunSpec {
       val result = UsefulWeather.from (jsonWeather)
 
       it ("produces a ceiling of 60000ft") {
-        assert (result.ceilingFt === 60000)
+        result.ceilingFt must equal (60000)
+      }
+    }
+  }
+
+  describe ("A non-gusty JsonWeather") {
+    val jsonWeather = happy.copy (windGust = "")
+
+
+    describe ("used to create a UsefulWeather") {
+      val result = UsefulWeather.from (jsonWeather)
+
+      it ("produces a gust factor of 1.0") {
+        result.windGustFactor must equal (1.0)
       }
     }
   }

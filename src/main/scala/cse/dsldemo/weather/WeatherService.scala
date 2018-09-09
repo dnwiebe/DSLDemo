@@ -2,36 +2,38 @@ package cse.dsldemo.weather
 
 import akka.NotUsed
 import akka.actor.{ActorSystem, Cancellable}
-import akka.http.scaladsl.{Http, HttpExt}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.{ActorMaterializer, Outlet, SourceShape}
+import akka.http.scaladsl.{Http, HttpExt}
 import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.{ActorMaterializer, Outlet, SourceShape}
 import akka.util.ByteString
+import cse.dsldemo.ImplicitContext
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import cse.dsldemo.Utils.TEST_DRIVE_ME
-
 import scala.concurrent.{ExecutionContext, Future}
 
 trait WeatherServiceFactory {
-  def apply (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit system: ActorSystem, materializer: ActorMaterializer, executionContext: ExecutionContext): WeatherService
+  def apply (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit ctx: ImplicitContext): WeatherService
 }
 
 object WeatherService extends WeatherServiceFactory {
   var factory: WeatherServiceFactory = this
 
-  override def apply (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit system: ActorSystem, materializer: ActorMaterializer, executionContext: ExecutionContext): WeatherService = {
+  override def apply (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit ctx: ImplicitContext): WeatherService = {
     new WeatherService (latitude, longitude, interval)
   }
 
-  def source (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit system: ActorSystem, materializer: ActorMaterializer, executionContext: ExecutionContext) = {
+  def source (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit ctx: ImplicitContext) = {
     val service = factory (latitude, longitude, interval)
     val outlet = Outlet[UsefulWeather] ("WeatherService")
     SourceShape (outlet)
   }
 }
 
-class WeatherService (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit system: ActorSystem, materializer: ActorMaterializer, executionContext: ExecutionContext) {
+class WeatherService (latitude: Double, longitude: Double, interval: FiniteDuration) (implicit ctx: ImplicitContext) {
+  implicit private val materializer: ActorMaterializer = ctx.materializer
+  implicit private val system: ActorSystem = ctx.system
+  implicit private val executionContext: ExecutionContext = ctx.executionContext
   private val httpExt: HttpExt = Http ()
 
   def source: Source[UsefulWeather, Cancellable] = {

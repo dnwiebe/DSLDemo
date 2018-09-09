@@ -1,10 +1,8 @@
 package cse.dsldemo.weather
 
-import org.scalatest.path
+import org.scalatest.{MustMatchers, path}
 
-import scala.util.Success
-
-class JsonWeatherTest extends path.FunSpec {
+class JsonWeatherTest extends path.FunSpec with MustMatchers {
   describe ("A happy hunk of JSON") {
     val json =
       """
@@ -35,6 +33,20 @@ class JsonWeatherTest extends path.FunSpec {
 
       it ("has all the expected field values") {
         assert (result === JsonWeather (
+          "3013",
+          List (List ("BKN", "016"), List ("OVC", "021")),
+          "19",
+          "22",
+          "080051Z",
+          "10",
+          "050",
+          "2",
+          "10"
+        ))
+      }
+
+      it ("works with MustMatchers") {
+        result must equal (JsonWeather (
           "3013",
           List (List ("BKN", "016"), List ("OVC", "021")),
           "19",

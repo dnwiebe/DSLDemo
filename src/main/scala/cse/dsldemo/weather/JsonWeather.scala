@@ -3,11 +3,9 @@ package cse.dsldemo.weather
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.{DefaultJsonProtocol, RootJsonFormat, _}
 
-import scala.util.{Success, Try}
-
 object JsonConverter {
   def from (json: String): JsonWeather = {
-    json.parseJson.convertTo[JsonWeather] (JsonWeatherJsonSupport.usefulWeather)
+    json.parseJson.convertTo[JsonWeather] (JsonWeatherJsonSupport.jsonWeather)
   }
 }
 
@@ -24,7 +22,7 @@ case class JsonWeather (
 )
 
 object JsonWeatherJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
-  implicit val usefulWeather: RootJsonFormat[JsonWeather] = jsonFormat(JsonWeather,
+  implicit val jsonWeather: RootJsonFormat[JsonWeather] = jsonFormat(JsonWeather,
     "Altimeter",
     "Cloud-List",
     "Dewpoint",

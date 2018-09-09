@@ -2,20 +2,21 @@ package cse.dsldemo.weather
 
 import java.time.{OffsetDateTime, ZoneOffset}
 
-import scala.util.{Failure, Success, Try}
-
 object UsefulWeather {
   def from (jsonWeather: JsonWeather): UsefulWeather = {
     val temperatureCelsius = toInteger ("Temperature", jsonWeather.temperature)
     val dewpointCelsius = toInteger ("Dewpoint", jsonWeather.dewpoint)
     val windSpeedFtPerSec = toInteger ("Wind-Speed", jsonWeather.windSpeed)
-    val windGustFtPerSec = toInteger ("Wind-Gust", jsonWeather.windGust)
+    val windGustFtPerSec = jsonWeather.windGust match {
+      case "" => windSpeedFtPerSec
+      case value => toInteger("Wind-Gust", value)
+    }
     UsefulWeather (
       temperatureCelsius = temperatureCelsius,
       relativeHumidity = relativeHumidity (temperatureCelsius, dewpointCelsius),
       windSpeedFtPerSec = windSpeedFtPerSec * 1.6878,
       windDirectionDegrees = toInteger ("Wind-Direction", jsonWeather.windDirection),
-      windGustFactor = windGustFtPerSec.asInstanceOf[Double] / windSpeedFtPerSec,
+      windGustFactor = windGustFtPerSec * 1.0 / windSpeedFtPerSec,
       ceilingFt = findCeiling (jsonWeather.cloudList),
       visibilityFt = toInteger ("Visibility", jsonWeather.visibility) * 5280,
       barometricPressure = toInteger ("Altimeter", jsonWeather.altimeter) / 100.0,
