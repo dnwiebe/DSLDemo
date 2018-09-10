@@ -39,18 +39,30 @@ object UsefulWeather {
     }
   }
 
-  private def findCeiling (cloudList: List[List[String]]): Int = {
-    cloudList.map {list =>
-      list.size match {
-        case 2 => (list.head, toInteger("Cloud-List", list (1)))
-        case _ => (list.head, 600)
+  private val lefts = Map ("SKC" -> 600, "CLR" -> 120, "NSC" -> 50, "FEW" -> 120, "SCT" -> 120)
+  private val rights = Set ("BKN", "OVC", "VV")
+
+  private def findCeiling (cloudList: List[List[String]]): Either[Int, Int] = {
+    val startingNone: Option[Either[Int, Int]] = None
+    cloudList
+      .filter {list => list.nonEmpty}
+      .map {list =>
+      (list.size, lefts.get (list.head), rights.contains (list.head)) match {
+        case (_, Some (level), _) => Left (level * 100)
+        case (2, None, true) => Right (toInteger ("Cloud-List", list (1)) * 100)
+        case (2, None, false) => Left (toInteger ("Cloud-List", list (1)) * 100)
+        case (_, None, _) => Right (toInteger ("Cloud-List", list (1)) * 100)
       }
     }
-    .sortBy (_._2)
-    .find {pair => (pair._1 == "OVC") || (pair._1 == "BKN")} match {
-      case Some (pair) => pair._2 * 100
-      case None => 60000
+    .sortBy {case Left (x) => x; case Right (x) => x}
+    .foldLeft (startingNone) {(soFar, layer) =>
+      (soFar, layer) match {
+        case (None, l) => Some (l)
+        case (Some (Left (_)), Right (alt)) => Some (Right (alt))
+        case (x, _) => x
+      }
     }
+    .getOrElse (Left (60000))
   }
 
   private def makeTime (timeStr: String): OffsetDateTime = {
@@ -79,7 +91,7 @@ case class UsefulWeather (
   windSpeedFtPerSec: Double,
   windDirectionDegrees: Int,
   windGustFactor: Double,
-  ceilingFt: Int,
+  ceilingFt: Either[Int, Int],
   visibilityFt: Int,
   barometricPressure: Double,
   time: OffsetDateTime,

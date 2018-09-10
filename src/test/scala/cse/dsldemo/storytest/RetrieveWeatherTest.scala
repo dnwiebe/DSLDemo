@@ -4,14 +4,13 @@ import java.util.concurrent.TimeUnit._
 
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph, Sink}
 import akka.stream.{ActorMaterializer, ClosedShape}
-import cse.dsldemo.{DanMatchers, ImplicitContext}
 import cse.dsldemo.weather.{UsefulWeather, WeatherService}
-import org.scalatest.matchers.{BeMatcher, MatchResult}
+import cse.dsldemo.{DanMatchers, ImplicitContext}
 import org.scalatest.{FunSuite, MustMatchers}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral, LongIsIntegral}
+import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
 
 class RetrieveWeatherTest extends FunSuite with MustMatchers with DanMatchers {
   implicit val ctx: ImplicitContext = ImplicitContext ()
@@ -51,11 +50,11 @@ class RetrieveWeatherTest extends FunSuite with MustMatchers with DanMatchers {
     weather.barometricPressure must be > 20.0
     weather.barometricPressure must be < 40.0
 
-    weather.ceilingFt must (be >= 0 and be <= 60000)
+    weather.visibilityFt must (be >= 0 and be <= 52800)
 
     weather.relativeHumidity mustBe between (0.0 and 100.0)
 
-    weather.visibilityFt mustBe between (0 and 52800)
+    (weather.ceilingFt match {case Left (alt) => alt; case Right (alt) => alt}) mustBe between (0 and 60000)
     weather.windDirectionDegrees mustBe between (0 and 360)
     weather.windGustFactor mustBe between (1.0 and 3.0)
     weather.windSpeedFtPerSec mustBe between (0.0 and 168.0)
