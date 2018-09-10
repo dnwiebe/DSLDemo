@@ -21,7 +21,6 @@ class RetrieveDriveTimeTest extends FunSuite with MustMatchers with DanMatchers 
     val future = subject.source.runWith (Sink.head)
 
     val result = Await.result (future, Duration (10, SECONDS))
-    val duration = result.duration.toSeconds
-    duration mustBe between (0L and 86400L)
+    result.duration mustBe between (Duration.Zero and Duration (1, DAYS))
   }
 }
